@@ -1,0 +1,198 @@
+use t426;
+drop table customers;
+
+create table customers 
+( customerid int primary key,
+firstname varchar (50),
+lastname varchar (50),
+email varchar (100));
+
+describe customers;
+
+insert into  customers (customerid, firstname, lastname, email)
+values
+(1, 'raj', 'patil', 'raj.patil@gmail.com'),
+(2, 'rani', 'jadhav', 'rani.jadhav@gmail.com'),
+(3, 'rohan', 'sawant', 'rohan.sawant@gmail.com'),
+(4, 'manoj', 'rane', 'manoj.rane@gmail.com'),
+(5, 'dev', 'joshi', 'dev.joshi@gmail.com');
+ 
+ select*from customers;
+ 
+-- creating products table
+ 
+drop table products;
+
+create table Products (
+productid int primary key,
+productname varchar(100),
+price decimal(10, 2));
+describe products;
+
+desc products;
+
+insert into products values
+(1, 'smartphone', 699.99),
+(2, 'laptop', 999.99),
+(3, 'jeans', 49.99),
+(4, 't-shirt', 19.99),
+(5, 'microwave', 89.99);
+
+
+select* from products;
+
+-- creating orders table
+
+drop table orders;
+ 
+ create table orders(
+    orderid int,
+    customerid int,
+    productid int,
+    orderdate date,
+    quantity int,
+    primary key (orderid, productid),
+    foreign key (customerid) references customers(customerid),
+    foreign key (productid) references products(productid)
+);
+
+desc orders;
+
+insert into orders (orderid, customerid,productid,orderdate,quantity) values
+				   (1,1,1,"2024-01-01",2),
+                   (2,2,3,"2024-01-02",1),
+                   (3,3,5,"2024-01-03",4),
+                   (4,1,2,"2024-01-04",1),
+                   (5,4,4,"2024-01-05",3);
+   
+   select*from orders;
+   
+ --  alter and truncate-- 
+-- 1.rename table orders to order_details -----
+alter table orders rename to order_details;
+describe customers;
+
+-- 2.ADDING AND REMOVING CONSTRAINT----
+alter table customers add constraint unique_email unique(email);
+describe customers;
+
+-- 3.add a column phone to the customers tables ---
+alter table customers add phone varchar(15);
+
+-- 4.modify a column email in the customers table to increase its length --
+alter table customers modify email varchar(150);
+
+-- 5.add a new foreign key constraint to order details table----
+alter table order_details add constraint fk_customer foreign key (customerid)
+references customers (customerid);
+
+-- 6.drop a column from the customers table ---
+alter table customers drop column phone;
+
+-- 7.rename table customers to firstname ----
+alter table customers rename firstname ;
+
+-- 8.truncate the order details table
+truncate table order_details;
+describe customers;
+
+-- update data---
+-- 1.update a customers email---
+update customers set email=" raj.patil@007gmail.com" where customerid =1;
+select * from customers;
+
+-- 2.update a prducts price ---
+update products set price =899.99 where productid=1;
+select * from products;
+
+-- 3.update a customer last name-- 
+update customers set lastname = "sharma" where customerid = 2;
+select * from customers;
+
+-- 4.update a customer firstname-- 
+update customers set firstname = 'Rahul' where customerid = 3;
+select * from customers;
+
+ --  delete data--
+-- 1.delete an order by composite key orderid and productid ---
+delete from  order_details where orderid = 1 and productid = 1;
+select* from orders;
+
+-- 2.delete a orders by orderid---
+delete from orders where orderid = 2;
+select * from orders;
+
+-- insert data ---
+-- 1.inserting a new customer---
+insert into customers (customerid,firstname,lastname,email)
+values(6,"sneha","desai","sneha.desai@gmail.com");
+select * from customers;
+
+-- 2.inserting new product---
+insert INTO products (productid, productname, price)
+values (6, 'blender', 39.99);
+select* from orders;
+
+-- 3. inserting new order---
+insert into orders (orderid, customerid, productid, orderdate, quantity)
+values (6, 5, 1, '2024-06-01', 2);
+select* from orders;
+
+	-- subquery data---
+ -- 1.subquery to find costomers who have placed orders---
+select* from customers where customerid in (select distinct customerid from orders);
+
+-- 2.subquery to find orders with quantities greter than the average order quantity---
+select* from orders where quantity > (select avg(quantity) from orders);
+
+-- 3.subquery to find customers who have not placed any orders----
+select * from customers where customerid not in (select distinct customerid from orders);
+
+-- 4.subquery to find the customer who placed the most recent order---
+select* from customers where customerid = (select customerid from orders order by orderdate desc limit 1);
+
+          -- joints data-- 
+-- 1.inner join to retrieve orders along with customer details----
+select o.orderid, o.orderdate, o.quantity, c.firstname, c.lastname from orders o
+inner join  customers c on o.customerid = c.customerid;
+
+-- 2.left join to retrieve orders along with customer details -----
+ select  c.firstname, c.lastname, o.orderid, o.orderdate, o.quantity from customers c
+left join orders o on c.customerid = o.customerid;
+
+--  3.right join to retrieve orders along with customer details -----
+select c.firstname, c.lastname, o.orderid, o.orderdate, o.quantity
+from orders o
+right join customers c on o.customerid = c.customerid;
+
+-- aggregate functions ----- 
+-- 1.count the number of orders placed----
+select count(*) from orders;
+
+-- 2.calculate the total quantity of products orderd--
+select sum(quantity) from orders;
+ 
+ --  3.find the average price of products ---
+select avg(price) from products;
+
+ -- 4. find the minimum order date ----
+select min(orderdate) from orders;
+
+-- 5.find the  maximum price of products  ----
+select max(price) from products;
+
+	-- group by having----- 
+-- 1.find products with an average quantity orderd greter than 2---
+select productid , avg(quantity) as avg_quantity from orders group by productid having avg(quantity) > 2;
+
+-- 2.find customers who have orderd products with an average price higher than 50--
+select c.customerid, c.firstname, c.lastname from customers c join orders o on c.customerid = o.customerid
+join products p on o.productid = p.productid
+group by c.customerid, c.firstname, c.lastname
+having avg (p.price) > 50;
+
+-- 3.find customers who have orderd products with a total price greater than 500 --
+select c.customerid, c.firstname, c.lastname from customers c join orders o on c.customerid = o.customerid
+join products p on o.productid = p.productid
+group by c.customerid, c.firstname, c.lastname
+having SUM(p.price * o.quantity) > 500;
